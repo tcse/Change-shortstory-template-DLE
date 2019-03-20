@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dleplugin>
+	<name>Change shortstory template</name>
+	<description>В шаблоне main.tpl и других подключенных в нём в удобном месте используйте {change_short_template}
+
+Добавление и изменение html разметки осуществляется в разделе &quot;Действия в файлах&quot; в правках над файлом &quot;engine/modules/main.php&quot;</description>
+	<icon></icon>
+	<version></version>
+	<dleversion>13</dleversion>
+	<versioncompare>greater</versioncompare>
+	<mysqlinstall><![CDATA[]]></mysqlinstall>
+	<mysqlupgrade><![CDATA[]]></mysqlupgrade>
+	<mysqlenable><![CDATA[]]></mysqlenable>
+	<mysqldisable><![CDATA[]]></mysqldisable>
+	<mysqldelete><![CDATA[]]></mysqldelete>
+	<file name="engine/init.php">
+		<operation action="after">
+			<searchcode><![CDATA[if( $config['start_site'] == 3 AND !$_SERVER['QUERY_STRING'] AND !$_POST['do']) {
+	$dle_module = "main";
+}]]></searchcode>
+			<replacecode><![CDATA[$user_tpl_tmp = isset($_COOKIE['short_template']) ? totranslit($_COOKIE['short_template']) : 'default';
+
+$change_template = false;
+$allt = array();
+
+if( isset($config['change_template']) AND $config['change_template'] != '' ) {
+  $user_short_tpl_tmp = explode(',', $config['change_template']);
+  if( count($user_short_tpl_tmp) > 1 AND $dle_module == 'main' ) $change_template = true;
+  
+  foreach($user_short_tpl_tmp as $val) {
+	  $val = explode('|',$val);
+	  $allt[$val[0]] = $val[0];
+  }
+} 
+
+if( !in_array( $user_tpl_tmp, $allt  ) ) $user_tpl_tmp = 'default';
+else $user_tpl_tmp = $allt[$user_tpl_tmp];]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/engine.php">
+		<operation action="replace">
+			<searchcode><![CDATA[$cache_prefix .= "_tempate_" . $config['skin'];]]></searchcode>
+			<replacecode><![CDATA[if( $user_tpl_tmp != 'default' AND $change_template ) $cache_prefix .= "_tempate_" . $user_tpl_tmp . "_" .  $config['skin'];
+else $cache_prefix .= "_tempate_" . $config['skin'];]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/modules/show.short.php">
+		<operation action="before">
+			<searchcode><![CDATA[if( $view_template != "rss" ) {]]></searchcode>
+			<replacecode><![CDATA[$user_tpl = ($user_tpl_tmp == 'default' OR !$change_template) ? 'shortstory.tpl' : 'shortstory_'.$user_tpl_tmp.'.tpl';]]></replacecode>
+		</operation>
+		<operation action="replace">
+			<searchcode><![CDATA[( 'shortstory.tpl' )]]></searchcode>
+			<replacecode><![CDATA[( $user_tpl )]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/modules/main.php">
+		<operation action="after">
+			<searchcode><![CDATA[$tpl->set ( '{speedbar}', $tpl->result['speedbar'] );]]></searchcode>
+			<replacecode><![CDATA[if( $change_template ) {
+
+if( isset($config['change_template']) AND $config['change_template'] != '' ) {
+	
+	$user_short_tpl = array();
+	$user_short_tpl_tmp = explode(',', $config['change_template']);
+
+	foreach( $user_short_tpl_tmp as $val ) {
+      $val = explode('|', $val);
+      $user_short_tpl[] = array('template' => $val[0], 'name' => htmlspecialchars_decode($val[1]));
+    }
+  
+} else {
+	
+	$user_short_tpl = array(
+		array('template' => 'default', 'name' => 'Стандарт'),
+		array('template' => 'list', 'name' => 'Список'),
+		array('template' => 'icons', 'name' => 'Иконки')
+	);
+	
+}
+
+$short_t_array = array();
+  
+foreach( $user_short_tpl as $val ) {
+  
+  if( is_array($val) ) {
+  $active_template = ' ';
+  if( $user_tpl_tmp == $val['template'] ) $active_template = ' class="current" ';
+  $short_t_array[] = '<a href="#"'.$active_template.'data-template="'.$val['template'].'">'.$val['name'].'</a>';
+  }
+
+}
+  
+$short_t_array = implode(' | ', $short_t_array);
+$short_t = <<<HTML
+   <div class="template-switcher">
+	   	<div>{$lang['template_switcher']} {$short_t_array}</div>
+	</div> 
+HTML;
+
+$onload_scripts[] = <<<HTML
+    $(".template-switcher a[data-template]").click(function(){
+        if($(this).hasClass('current')) return false;
+        $(this).addClass('current').siblings().removeClass('current');
+        Cookie.create('short_template', $(this).data('template'), {
+			expires: 8760,
+			path: '/'
+		});
+        window.location.href=location.href;        
+        return false;
+    });
+HTML;
+  
+$tpl->set ( '{change_short_template}',  $short_t);
+
+} else $tpl->set ( '{change_short_template}',  '');]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/inc/options.php">
+		<operation action="after">
+			<searchcode><![CDATA[showRow( $lang['opt_sys_biw'], $lang['opt_sys_biwd'], makeCheckBox( "save_con[bbimages_in_wysiwyg]", "{$config['bbimages_in_wysiwyg']}" ) );]]></searchcode>
+			<replacecode><![CDATA[showRow( $lang['change_template'], $lang['change_template_2'], "<textarea class=\"classic\" style=\"width:100%;height:150px;\" name=\"save_con[change_template]\">{$config['change_template']}</textarea>" );]]></replacecode>
+		</operation>
+		<operation action="before">
+			<searchcode><![CDATA[$save_con['offline_reason'] = trim(strip_tags(stripslashes( $save_con['offline_reason'] )));]]></searchcode>
+			<replacecode><![CDATA[$save_con['change_template'] = trim(stripslashes( $save_con['change_template'] ));
+$save_con['change_template'] = htmlspecialchars( $save_con['change_template'], ENT_QUOTES, $config['charset']);]]></replacecode>
+		</operation>
+		<operation action="replace">
+			<searchcode><![CDATA[if( $name != "offline_reason" ) {]]></searchcode>
+			<replacecode><![CDATA[if( $name != "offline_reason" AND $name != "change_template" ) {]]></replacecode>
+		</operation>
+	</file>
+	<file name="language/Russian/adminpanel.lng">
+		<operation action="after">
+			<searchcode><![CDATA['wysiwyg_language'		=>  "ru",]]></searchcode>
+			<replacecode><![CDATA['change_template'		=>  "Список шаблонов",
+'change_template_2'		=>  "Перечислите шаблоны для смены<br />Пример: <strong>default</strong>-<strong>Стандарт</strong> | <strong>list</strong>-<strong>Список</strong> | <strong>icons</strong>-<strong>Иконки</strong><br /><br />Префикс шаблона - Текст или картинка<br /> - default = shortstory.tpl<br /> - list = shortstory_<strong>list</strong>.tpl<br />Для отключения смены оставьте один шаблон. Пустое поле задействует стандартный набор смены шаблонов.",]]></replacecode>
+		</operation>
+	</file>
+	<file name="language/Russian/website.lng">
+		<operation action="after">
+			<searchcode><![CDATA['wysiwyg_language'	=>  "ru",]]></searchcode>
+			<replacecode><![CDATA['template_switcher'     =>  "Режим просмотра:",]]></replacecode>
+		</operation>
+	</file>
+</dleplugin>
