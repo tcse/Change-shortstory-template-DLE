@@ -1,6 +1,8 @@
 # Change-shortstory-template-DLE
 Переключатель шаблонов коротких новостей.
 
+![Image alt](https://user-images.githubusercontent.com/44625352/54727544-ae10b500-4b78-11e9-850a-0f64054bdf9f.jpg)
+
 Данный модуль является производным модуля сделанного [Sander'ом](https://sandev.pro/web/24-pereklyuchenie-shablonov-shortstory.html), который слегка изменился и стал скорей модулем не смены шаблонов, а смены class'ов.
 И смена вида осуществляется лишь за счёт правил CSS.
 Тестировался на DLE 13 версии.
