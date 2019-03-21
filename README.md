@@ -24,6 +24,7 @@
 default|Стандартный вид,thumb|Кубики миниатюр
 
 default в данном случае являеться shortstory.tpl, а **thumb** уже будет префиксом shortstory_**thumb**.tpl
+
 Тестировался на DLE 13 версии.
 
 teramoune@gmail.com на всякий случай.
